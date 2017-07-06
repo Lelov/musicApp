@@ -116,6 +116,21 @@ Vue.use(Swiper);
 ```
 # 5.在切换页面时如果当前页面有定时器之类的最好先清掉
 # 6.vue-lazyload vue图片懒加载插件
+安装
+```
+npm install vue-lazyload --save
+```
+在`main.js`中注册组件,并传入设置参数
+```
+import VueLazyload from 'vue-lazyload;
+
+Vue.use(VueLazyload, {
+  // 默认在没有加载时显示的图片,可以通过 `require` 语法引入图片
+  loading: require(')
+})
+```
+基本用法
+
 # 7.在vue使用 `axios` 完成网络请求相关配置
 - axios配置在 src 根目录的 main.js 中,
 

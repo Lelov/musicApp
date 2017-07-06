@@ -20,10 +20,10 @@ export default {
 </script>
 
 <style lang="less" scoped>
-.player{
- color: #ccc;position: fixed;width: 100%;height:100%;background-color: #fff;top: 0;z-index: 1000;
-}
-.full{
-  height: 100%;width: 100%;
-}
+// .player{
+//  color: #ccc;position: fixed;width: 100%;height:100%;background-color: #fff;top: 0;z-index: 1000;
+// }
+// .full{
+//   height: 100%;width: 100%;
+// }
 </style>

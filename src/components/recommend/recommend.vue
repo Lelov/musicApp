@@ -1,61 +1,56 @@
 <template>
-	<div class="wrap">
+  <div class="wrap">
     <div class="recommend">
-			<div class="silder">
-				<swiper :options="swiperOption" ref="mySwiper">
-						<!-- slides -->
-						<swiper-slide
-						v-for="(item,index) in focusArr"
-						:key="index">
-								<img :src="item.picUrl">
-						</swiper-slide>
-						<!-- Optional controls -->
-						<div class="swiper-pagination"  slot="pagination"></div>
-				</swiper>
-			</div>
+      <div class="silder">
+        <swiper :options="swiperOption" ref="mySwiper">
+          <!-- slides -->
+          <swiper-slide v-for="(item,index) in focusArr" :key="index">
+            <img :src="item.picUrl">
+          </swiper-slide>
+          <!-- Optional controls -->
+          <div class="swiper-pagination" slot="pagination"></div>
+        </swiper>
+      </div>
       <!-- 歌单 -->
-			<div class="reco_list">
-				<div class="reco_list_title">
-					<areaTitle areaName="歌单"></areaTitle>
-				</div>
-				<div class="reco_list_wrap">
-					<song-item
-					v-for="(item,index) in recoList"
-					:listDes="item.playCount | toW"
-					:listAuthor="item.creator.nickname"
-					:listName="item.name"
-					:key="index"
-					:data-id="item.id"
-					>
-						<img :src="item.coverImgUrl" slot="listBg">
-					</song-item>
-				</div>
-			</div>
+      <div class="reco_list">
+        <div class="reco_list_title">
+          <areaTitle areaName="歌单"></areaTitle>
+        </div>
+        <div class="reco_list_wrap" v-show="!isLoading">
+          <song-item v-for="(item,index) in recoList" :listDes="item.playCount | toW" :listAuthor="item.creator.nickname" :listName="item.name" :key="index" :data-id="item.id">
+            <img :src="item.coverImgUrl" slot="listBg">
+          </song-item>
+        </div>
+        <loading v-show="isLoading"></loading>
+      </div>
     </div>
-	</div>
+  </div>
 </template>
 
 <script>
-import {getRecommendApi} from 'api/recommend'
-import {ERR_OK} from 'api/apiCommon'
+import { getRecommendApi } from 'api/recommend'
+import { ERR_OK } from 'api/apiCommon'
 import SongItem from 'components/common/songItem'
 import AreaTitle from 'components/common/areaTitle'
+import Loading from 'components/common/loading'
 
 export default {
   components: {
     SongItem,
-    AreaTitle
+    AreaTitle,
+    Loading
   },
   filters: {
     toW(val) {
       let len = (val + '').split('')
       val = len.length > 4 ? len.splice(0, len.length - 4).join('') + '万' : val
-			val = val + ''
+      val = val + ''
       return val
     }
   },
   data() {
     return {
+      isLoading: true,
       focusArr: [],
       recoList: [],
       swiperOption: {
@@ -1047,10 +1042,20 @@ export default {
       }
     }
   },
-  mounted () {
+  mounted() {
     // 获取页面数据
     this.getRecommend()
-    this.getRecoList()
+
+    this.getRecoList();
+
+    setTimeout(() => {
+      const timer = window.setInterval(() => {
+        if (this.recoList.length > 1) {
+          this.isLoading = false
+          clearInterval(timer)
+        }
+      }, 500)
+    }, 1500)
   },
   methods: {
     getRecommend() {
@@ -1064,23 +1069,30 @@ export default {
     getRecoList() {
       // 获取推荐歌单
       this.$http.get('http://musicapi.duapp.com/api.php?type=topPlayList&cat=%E5%85%A8%E9%83%A8&offset=0&limit=9')
-				.then(res => {
+        .then(res => {
           this.recoList = res.data.playlists
           console.log(this.recoList)
-				})
-				.catch(err => {
-					console.log(err)
-				})
-		}
+        })
+        .catch(err => {
+          console.log(err)
+        })
+    }
   }
 }
 </script>
 
 <style lang='less' scoped>
-img{
-  width: 100%;height: 100%;display: block;
+img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
-.reco_list_wrap{
-	display: flex;justify-content: space-around;flex-wrap: wrap;
+
+.reco_list_wrap {
+  display: flex;
+  position: relative;
+  overflow: auto;
+  justify-content: space-around;
+  flex-wrap: wrap;
 }
 </style>
