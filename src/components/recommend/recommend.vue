@@ -17,7 +17,7 @@
           <areaTitle areaName="歌单"></areaTitle>
         </div>
         <div class="reco_list_wrap" v-show="!isLoading">
-          <song-item v-for="(item,index) in recoList" :listDes="item.playCount | toW" :listAuthor="item.creator.nickname" :listName="item.name" :key="index" :data-id="item.id">
+          <song-item v-for="(item,index) in recoList" :listDes="item.playCount | toW" :listName="item.name" :key="index" :data-id="item.id">
             <img :src="item.coverImgUrl" slot="listBg">
           </song-item>
         </div>
@@ -42,9 +42,9 @@ export default {
   },
   filters: {
     toW(val) {
+      // 处理播放次数,大于 4位数显示为多少万,否则正常显示
       let len = (val + '').split('')
-      val = len.length > 4 ? len.splice(0, len.length - 4).join('') + '万' : val
-      val = val + ''
+      val = len.length > 4 ? len.splice(0, len.length - 4).join('') + '万' : val + ''
       return val
     }
   },
@@ -53,6 +53,7 @@ export default {
       isLoading: true,
       focusArr: [],
       recoList: [],
+      // swiper设置参数
       swiperOption: {
         notNextTick: true,
         autoplay: 3000,
@@ -1047,7 +1048,7 @@ export default {
     this.getRecommend()
 
     this.getRecoList();
-
+    // 设置loading图,至少显示1500毫秒,当获取数据成功后取消loading图
     setTimeout(() => {
       const timer = window.setInterval(() => {
         if (this.recoList.length > 1) {
@@ -1055,7 +1056,7 @@ export default {
           clearInterval(timer)
         }
       }, 500)
-    }, 1500)
+    }, 1000)
   },
   methods: {
     getRecommend() {
