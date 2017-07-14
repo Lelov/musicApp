@@ -18,6 +18,7 @@
 import NavHeader from 'components/header/navHeader'
 import NavTab from 'components/navTab/navTab'
 import Player from 'components/player/player'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'app',
@@ -27,7 +28,7 @@ export default {
     Player
   },
   methods: {
-    setFontSize () {
+    setFontSize() {
       // 获取屏幕宽度
       let windowWidth = document.body.clientWidth
       // 获取根元素
@@ -36,11 +37,27 @@ export default {
     }
   },
   mounted() {
+    // 默认导航页
     this.$router.push('/recommend')
     // app 载入时调整根元素字体
     this.setFontSize()
     // app 宽度发生改变时调整根元素字体
     window.addEventListener('resize', this.setFontSize)
+  },
+  computed: {
+    // 获取播放器是否存在
+    ...mapGetters([
+      'playingList'
+    ])
+  },
+  watch: {
+    playingList() {
+      if (!this.playingList) return
+      const aWrap = document.querySelectorAll('.wrap')
+      aWrap.forEach((item) => {
+        item.style.paddingBottom = '50px'
+      })
+    }
   }
 }
 </script>
@@ -54,10 +71,36 @@ export default {
   text-align: center;
   color: #2c3e50;
 }
-#app .wrap{
-  position: fixed;top: 90px;bottom:0;overflow: auto;width: 100vw;
+
+#app .wrap,
+.full_box {
+  position: fixed;
+  top: 90px;
+  bottom: 0;
+  overflow: auto;
+  width: 100vw;
+  background-color: #fff;
 }
-.wrap>div{
+
+body div.full_box {
+  top: 0;
+  position: fixed;
+  height: 100vh;
+}
+
+.wrap>div {
   position: relative;
+}
+
+@keyframes itemRotate {
+  from {
+    transform: rotate(0deg)
+  }
+  50% {
+    transform: rotate(180deg)
+  }
+  to {
+    transform: rotate(360deg)
+  }
 }
 </style>

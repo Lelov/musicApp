@@ -131,7 +131,7 @@ Vue.use(VueLazyload, {
 ```
 基本用法
 
-# 7.在vue使用 `axios` 完成网络请求相关配置
+# 7.在vue只使用 `axios` 完成网络请求相关配置
 - axios配置在 src 根目录的 main.js 中,
 
 ```
@@ -139,5 +139,41 @@ import axios from 'axios'
 ```
 将axios添加到Vue实例上
 ```
-Vue.prototype.$http = axios;
+Vue.prototype.$http = axios
+```
+使用方式:
+```
+this.$http.get(url)
+  .then((res) => {
+    // 处理 成功的情况
+  })
+  .catch((err) => {
+    // 处理失败的情况
+  })
+```
+
+# 8.vuex相关
+`vuex`用于组件之间专递值的变化,非常有用的插件,只是配置稍显麻烦
+安装vuex
+```
+npm install vuex --save
+```
+# 9. vue中子组件的引用
+在模板中指定需要访问的节点,并指定 `ref` 属性,即索引id
+```
+<div class="player">
+  <audio ref="audio"></audio>
+</div>
+```
+通过 `$refs` 访问指定的子组件
+```
+const audio = this.$refs.audio
+```
+
+# 10.Vue 中DOM ready
+通过 `$nextTick(callback)` 来完成
+```
+this.$nextTick(() => {
+  // DOM 更新完成
+})
 ```

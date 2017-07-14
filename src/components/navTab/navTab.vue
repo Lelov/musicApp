@@ -1,36 +1,33 @@
 <template>
-	<div class="nav">
-    <router-link
-    tag="div"
-    class="nav_link"
-    v-for="(item,index) in linkName"
-    :to="item.path"
-    :key="index"><div>
-    {{ item.name }}
-    </div></router-link>
+  <div class="nav">
+    <router-link tag="div" class="nav_link" v-for="(item,index) in linkName" :to="item.path" :key="index">
+      <div>
+        {{ item.name }}
+      </div>
+    </router-link>
   </div>
 </template>
 
 <script>
 export default {
-  data () {
+  data() {
     return {
       linkName: [
+        {
+          name: '个人',
+          path: '/mine'
+        },
         {
           name: '个性推荐',
           path: '/recommend'
         },
         {
+          name: '歌单',
+          path: '/playlist'
+        },
+        {
           name: '排行榜',
           path: '/ranking'
-        },
-        {
-          name: '电台',
-          path: '/radio'
-        },
-        {
-          name: '个人',
-          path: '/mine'
         }
       ]
     }
@@ -40,15 +37,24 @@ export default {
 
 <style scoped lang="less">
 @import '../../less/style.less';
-.nav{
+.nav {
   display: flex;
 }
-.nav{
+
+.nav {
   justify-content: space-between;
 }
-.nav_link{
-  flex-grow: 1;border-bottom: 2px solid transparent;font-weight: 600;height: 40px;line-height: 40px;}
-div.router-link-active{
-  color: @themeBaseBGColor;border-color: @themeBaseBGColor;
+
+.nav_link {
+  flex-grow: 1;
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
+  height: 40px;
+  line-height: 40px;
+}
+
+div.router-link-active {
+  color: @themeBaseBGColor;
+  border-color: @themeBaseBGColor;
 }
 </style>

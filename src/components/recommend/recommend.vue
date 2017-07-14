@@ -13,15 +13,15 @@
       </div>
       <!-- 歌单 -->
       <div class="reco_list">
-        <div class="reco_list_title">
+        <div class="reco_list_title" @click="goPlaylist">
           <areaTitle areaName="歌单"></areaTitle>
         </div>
         <div class="reco_list_wrap" v-show="!isLoading">
-          <song-item v-for="(item,index) in recoList" :listDes="item.playCount | toW" :listName="item.name" :key="index" :data-id="item.id">
-            <img :src="item.coverImgUrl" slot="listBg">
+          <song-item v-for="(item,index) in recoList" :listDes="item.playCount | toW" :listName="item.name" :key="index" :listId="item.id">
+            <img v-lazy="item.coverImgUrl" slot="listBg">
           </song-item>
         </div>
-        <loading v-show="isLoading"></loading>
+        <loading v-if="isLoading"></loading>
       </div>
     </div>
   </div>
@@ -42,9 +42,9 @@ export default {
   },
   filters: {
     toW(val) {
-      // 处理播放次数,大于 4位数显示为多少万,否则正常显示
+      // 处理播放次数,大于 5位数显示为多少万,否则正常显示
       let len = (val + '').split('')
-      val = len.length > 4 ? len.splice(0, len.length - 4).join('') + '万' : val + ''
+      val = len.length > 5 ? len.splice(0, len.length - 4).join('') + '万' : val + ''
       return val
     }
   },
@@ -1055,8 +1055,8 @@ export default {
           this.isLoading = false
           clearInterval(timer)
         }
-      }, 500)
-    }, 1000)
+      }, 30)
+    }, 500)
   },
   methods: {
     getRecommend() {
@@ -1072,11 +1072,14 @@ export default {
       this.$http.get('http://musicapi.duapp.com/api.php?type=topPlayList&cat=%E5%85%A8%E9%83%A8&offset=0&limit=9')
         .then(res => {
           this.recoList = res.data.playlists
-          console.log(this.recoList)
         })
         .catch(err => {
-          console.log(err)
+          document.querySelector('.reco_list').innerHTML = '网络连接错误'
         })
+    },
+    // 转到歌单页
+    goPlaylist() {
+      this.$router.push('/playlist')
     }
   }
 }
@@ -1095,5 +1098,9 @@ img {
   overflow: auto;
   justify-content: space-around;
   flex-wrap: wrap;
+}
+
+.song_item {
+  width: 32%;
 }
 </style>
