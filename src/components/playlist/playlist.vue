@@ -32,7 +32,7 @@ export default {
 					this.playList = res.data.playlists
 				})
 				.catch(err => {
-					document.querySelector('.reco_list').innerHTML = '网络连接错误'
+					document.querySelector('.reco_list').innerHTML = '出错了，请刷新'
 				})
 		}
 	},

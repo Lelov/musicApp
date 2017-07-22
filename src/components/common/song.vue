@@ -51,17 +51,6 @@ export default {
       'playingSongIndex'
     ])
   },
-  data() {
-    return {
-      // 设置歌曲信息
-      song: {
-        name: '歌曲名称',
-        songAr: '歌手名称',
-        songId: '歌曲id',
-        songPic: '歌曲图片'
-      }
-    }
-  },
   methods: {
     play() {
       // 设置播状态为true
@@ -85,8 +74,11 @@ export default {
         songInfo.arName = item.ar[0].name
         arr.push(songInfo)
       })
+      // 存储正序播放列表
+      this.setOrderPlayList(arr)
       // 设置播放列表
       this.setPlayingList(arr)
+
     },
     ...mapMutations({
       // 设置播放列表
@@ -95,7 +87,8 @@ export default {
       setPlaying: 'SET_PLAYING',
       // 设置歌曲播放信息
       setPlayingSong: 'SET_PLAYINGSONG',
-      setPlayingSongIndex: 'SET_PLAYINGSONGINDEX'
+      setPlayingSongIndex: 'SET_PLAYINGSONGINDEX',
+      setOrderPlayList: 'SET_ORDERPLAYLIST'
     })
   }
 }

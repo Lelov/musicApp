@@ -11,3 +11,7 @@ export const SET_FULLPLAYER = 'SET_FULLPLAYER'
 export const SET_PLAYINGSONG = 'SET_PLAYINGSONG'
 // 设置播放歌曲索引
 export const SET_PLAYINGSONGINDEX = 'SET_PLAYINGSONGINDEX'
+// 设置歌曲播放模式
+export const SET_PLAYMODE = 'SET_PLAYMODE'
+//设置顺序播放
+export const SET_ORDERPLAYLIST = 'SET_ORDERPLAYLIST'

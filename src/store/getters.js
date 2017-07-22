@@ -11,3 +11,7 @@ export const fullplayer = state => state.fullplayer
 export const playingSong = state => state.playingSong
 
 export const playingSongIndex = state => state.playingSongIndex
+
+export const playMode = state => state.playMode
+
+export const orderPlayList = state => state.orderPlayList

@@ -63,6 +63,7 @@ export default {
       this.$http.get(url + this.listId).then((res) => {
         if (res.status !== 200) return
         const listData = JSON.parse(res.request.responseText)
+        //设置歌单列表
         this.setPlayList(listData.playlist)
       })
     },

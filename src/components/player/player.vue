@@ -1,14 +1,14 @@
 <template lang="html">
-  <div class="player" v-show="playingList.length > 1" @click="showSong">
+  <div class="player" v-show="playingList.length > 1" @click="showSongLyric">
     <!-- 全屏播放器 -->
     <transition name="fullPlayer">
       <div class="full" v-show="isFull">
-        <div @click="isFull=false" class="top">
+        <div @click.stop="showLyric = isFull = false" class="top">
           <go-back :title="playingSong.songName" h="48px">
-            <p class="ar_name">{{playingSong.arName}}</p>
+            <p class="ar_name">{{ playingSong.arName }}</p>
           </go-back>
         </div>
-        <div class="song_img_area"> 
+        <div class="song_img_area" v-show="!showLyric"> 
           <!-- 动画旋转类-->
           <div :style="{animationPlayState:playing ? 'running' : 'paused'}" class="ani_cont" ref="picAni">
             <img src="../../assets/images/full_default.png" class="song_img">
@@ -17,27 +17,35 @@
             </div>
           </div>
         </div> 
+        <div class="lyric_wrap" v-show="showLyric">
+          <div class="lyric_cont">
+            <div v-show="!songLyric.lrcState">
+              <p>{{songLyric.resources}}</p>
+            </div>
+            <div v-show="songLyric.lrcState">
+              <p v-for="(item,index) in songLyric.resources">{{ item }}</p>
+            </div>
+          </div>
+        </div>
         <!--播放进度条  -->
-        <div class="progress_bar">
-          进度条
+        <div class="progress_bar_wrap">
+          <progress-bar :playedTime="musicPlayedTime" :totalTime="musicTotalTime" :percent="musicPlayedPercent" @dragPercentChange="getDragPercent"></progress-bar>
         </div>
         <!-- 底部功能按钮 -->
         <div class="play_tool">
           <!-- 播放模式 -->
-          <div class="play_mode">
-            <!-- <img src=""> -->
-          </div>
+          <div :class="playModeBg" class="play_mode" @click="playModeChange"></div>
           <!--上一曲-->
-          <div class="last" @click="prevSong">
+          <div class="last" @click.stop="prevSong">
             <img src="../../assets/images/last.png">
           </div>
           <!--播放状态-->
-          <div class="play_state" @click="playSatate">
+          <div class="play_state" @click.stop="playSatate">
             <img src="../../assets/images/play.png" v-show="!playing">
             <img src="../../assets/images/pause.png" v-show="playing">
           </div>
           <!--下一曲-->
-          <div class="next" @click="nextSong">
+          <div class="next" @click.stop="nextSong">
             <img src="../../assets/images/next.png">
           </div>
           <!--播放列表-->
@@ -47,11 +55,12 @@
     </transition>
     <!-- mini播放器 -->
     <transition name="mini_player_ani">
-      <div class="mini" v-show="!isFull" @click="isFull=true">
+      <div class="mini" v-show="!isFull" @click.stop="isFull=true">
         <div class="mini_main">
           <div class="mini_song_cover_img" v-show="playingSong.picUrl">
             <img :src="playingSong.picUrl" :style="{animationPlayState:playing ? 'running' : 'paused'}" class="ani_cont" width="40" height="40">
           </div>
+
           <div class="song_info">
             <!-- 歌曲名字  -->
             <p>{{ playingSong.songName}}</p>
@@ -59,30 +68,35 @@
             <p>{{ playingSong.arName }}</p>
           </div>
         </div>
-        <div class="mini_state" @click.stop="1>2">
+        <div class="mini_state">
           <!-- 播放状态  -->
-          <div :class="toggleBgImg" @click="playSatate" ref="mState"></div>
-          <div class="mini_play_list" @click="showMenu"></div>
+          <div @click.stop="playSatate" ref="mState" class="mini_state_pic">
+            <!-- mini 圆形播放进度条  -->
+            <progress-circle :strokePercent="playedPercent"></progress-circle>
+            <div :class="toggleBgImg"></div>
+          </div>
+          <div class="mini_play_list" @click.stop="showMenu"></div>
         </div>
       </div>
     </transition>
     <!-- 播放列表 -->
-    <div class="menu_layer" @click="showPlayingMenu=false"  v-show="showPlayingMenu"></div>
+    <div class="menu_layer" @click="showPlayingMenu=false" v-show="showPlayingMenu"></div>
     <transition name="playing_menu_ani">
       <div class="playing_menu" v-show="showPlayingMenu" @click.stop="1>2">
         <div class="playing_menu_top">
           <div>切换播放模式</div>
           <div>清空</div>
         </div>
-        <div class="playing_menu_item" @click="play(index)" v-for="(item,index) in playingList">
+        <div class="playing_menu_item" @click="play(index)" v-for="(item,index) in orderPlayList">
           <div :class="{playing_menu_item_info:true,cureentSong:index==playingSongIndex}"><img src="../../assets/images/aap.png" v-show="index==playingSongIndex"></ima>{{ item.songName }}<span> - {{ item.arName }}</span></div>
           <div class="" @click="delSong(index)"><img src="../../assets/images/x.png" alt=""></div>
         </div>
       </div>
     </transition>
-    
+    <!-- 核心 播放器  -->
     <div class="playControl">
-      <audio ref="audio" :src="setUrl" autoplay controls @ended="nextSong" @canplay="getCanplayState">
+      <audio ref="audio" :src="setUrl" autoplay="true
+      " @ended="musicChange" @canplay="getCanplayState" :loop="playMode === 2" @timeupdate="setPlayedTime" @durationchange="setTotalTime">
         您的浏览器不支持 audio 标签。
       </audio>
     </div>
@@ -92,12 +106,15 @@
 <script>
 import { mapGetters, mapMutations } from 'vuex'
 import GoBack from 'components/common/goBack'
-import { getSongUrl } from '../../common/js/song'
-
+import { getSongUrl, getSongLyric } from '../../common/js/song'
+import ProgressBar from './progressBar'
+import ProgressCircle from './progressCircle'
 
 export default {
   components: {
-    GoBack
+    GoBack,
+    ProgressBar,
+    ProgressCircle
   },
   data() {
     return {
@@ -108,7 +125,28 @@ export default {
       // 展示歌曲播放列表
       showPlayingMenu: false,
       // 歌曲资源是否准备完成
-      canplayState: false
+      canplayState: false,
+      // 格式化后的歌曲总时长
+      musicTotalTime: '',
+      // 未格式化歌曲总时长
+      duration: 0,
+      // 格式化后的歌曲已播放时长
+      musicPlayedTime: '',
+      // 未格式化歌曲已播放时长
+      currentTime: 0,
+      // 歌曲播放进度
+      musicPlayedPercent: 0,
+      // mini圆形播放的百分比
+      playedPercent: 100,
+      // 播放模式的背景图片置换
+      playModeBg: '',
+      // 存储原播放数据
+      oldPlayList: {},
+      // 播放模式切换时的提示信息
+      changeModeMsg: '',
+      songLyric: {},
+      // 展示歌词列表
+      showLyric: false
     }
   },
   computed: {
@@ -116,7 +154,9 @@ export default {
       'playingSong',
       'playing',
       'playingList',
-      'playingSongIndex'
+      'playingSongIndex',
+      'playMode',
+      'orderPlayList'
     ]),
     // 播放状态切换时对应图标跟着切换
     toggleBgImg() {
@@ -138,13 +178,123 @@ export default {
         // 根据播放状态进行暂停与播放
         this.playing ? audio.play() : audio.pause()
       })
+    },
+    // 监听playMode值的变化
+    playMode() {
+      // 根据 playMode的值 置换播放模式的背景图
+      this.playModeBg = this.playMode === 1 ? 'play_random' : this.playMode === 2 ? 'play_singles' : 'play_loop'
+      // 根据playMode的值来置换随机歌曲数组与正序歌曲
+      // playMode为1随机播放，其他为正序播放
+      if (this.playMode === 1) {
+        // 获取随机数组并设置随机播放列表
+        this.setPlayingList(this.getRandomList(this.playingList))
+      } else {
+        // 正顺播放
+        this.setPlayingList(this.orderPlayList)
+      }
     }
   },
   methods: {
-    getCanplayState() {
-      // 资源请求成功,为可播放状态
-      this.canplayState = true
+    // 生成随机播放列表
+    getRandomList(arr) {
+      // 处理数组地址
+      const obj = {}
+      obj.arr = arr
+      const newArr = JSON.parse(JSON.stringify(obj.arr))
+      // 处理数组
+      for (let i = 0; i < newArr.length; i++) {
+        // 获取随机数
+        let j = Math.floor(Math.random() * (i + 1))
+        // newArr[i]赋值给变量
+        let c = newArr[i]
+        // 改变当前的下标的值
+        newArr[i] = newArr[j]
+        // newArr[i]的值给随机下标
+        newArr[j] = c
+      }
+      return newArr
     },
+    // 改变播放模式
+    playModeChange() {
+      this.setPlayMode((++this.playMode) % 3)
+    },
+    musicChange() {
+      console.log(this.playMode)
+      // 单曲播放模式时让 音频重复播放
+      if (this.playMode === 2) return
+      const audio = this.$refs.audio
+      //取消循环播时对loop取反
+      if (audio.loop) audio.loop = false
+      // 非单曲模式调用 播放下一曲
+      this.nextSong()
+    },
+    /*------处理歌词 函数开始-----------*/
+    showSongLyric() {
+      this.showLyric = !this.showLyric
+      getSongLyric(this.playingSong.songId, (res) => {
+        // 判断是否有歌词，object为有歌词
+        this.songLyric = {
+          // 设置歌曲是否有歌词
+          lrcState: typeof res === 'object' ? true : false,
+          // 获取歌词信息歌词
+          resources: res.lyric ? res.lyric : res,
+          // 自动播放状态
+          autoScroll: res.autoScroll
+        }
+        // 歌词进行格式化
+        if (this.songLyric.lrcState) this.lyricFormat()
+      })
+    },
+    lyricFormat() {
+      const lrc = this.songLyric
+      // 每句歌词播放对应的时间戳
+      let lrcTimeArr = []
+      // 获取每句歌词数据
+      let lrcArr = lrc.resources.split(/\n+/).filter((item) => {
+        // 过滤数值为空的的item
+        return item !== ''
+      })
+      // 判断歌词是否支持自动播放
+      if (lrc.autoScroll) {
+        // 去掉时间提示为空白的字段
+        const newLrcArr = lrcArr.filter((item) => {
+          return item.split(']')[1] !== ''
+        })
+        lrcArr = []
+        newLrcArr.forEach((item) => {
+          const detail = item.split(']')
+          // 设置每句歌词的时间戳数组
+          lrcTimeArr.push(detail[0])
+          // 获取每句歌词
+          lrcArr.push(detail[1])
+        })
+      }
+      // 对时间戳数组进行格式化处理
+      this.lrcTimeformat(lrcTimeArr)
+      // 设置歌词
+      this.songLyric.resources = lrcArr
+    },
+    // 格式化歌曲时间
+    lrcTimeformat(arr) {
+      this.songLyric.songLyricTime = arr.map((item) => {
+        item = item.split('[')[1].split('.')[0]
+
+        return this.stringToTime(item)
+      })
+    },
+    // 将 00:00 处理为时间戳
+    stringToTime(val) {
+      const time = val.split(':')
+      let timeFrag = time[0].split('')
+      // 处理分
+      val = (timeFrag[0] + 0) * 60 + timeFrag[1] * 60
+      // 处理秒
+      val += time[1] * 1
+      return val
+    },
+    /*------- 处理歌词 结束-----------
+    --------- 播放工具 函数开始 --------
+    */
     // 播放上一首歌
     prevSong() {
       // 在资源准备未完成不允许操作
@@ -173,8 +323,8 @@ export default {
       // 点击时请求资源,此时资源未准备好
       this.canplayState = false
     },
+    /* --------- 播放工具 函数结束-----------------*/
     play(index) {
-      console.log(this.canplayState)
       // 在资源准备未完成不允许操作
       if (!this.canplayState) return
       // 设置播状态为true
@@ -182,17 +332,12 @@ export default {
       // 设置播放歌曲的索引
       this.setPlayingSongIndex(index)
     },
-    // 删除歌曲
-    delSong(index) {
 
-    },
     getSongMUrl() {
       // 没有播放歌曲时不继续执行
       if (!this.playingSong) return
-      // 获取播放索引值
-      let i = this.playingSongIndex
       // 根据索引设置当前播放歌曲
-      this.setPlayingSong(i)
+      this.setPlayingSong(this.playingSongIndex)
       // 获取歌曲博凡连接地址
       getSongUrl(this.playingSong.songId, (res) => {
         // 设置播放歌曲连接地址
@@ -200,6 +345,10 @@ export default {
         // 设置播状态为true
         this.setPlaying(true)
       })
+    },
+    getCanplayState() {
+      // 资源请求成功,为可播放状态
+      this.canplayState = true
     },
     showMenu() {
       this.showPlayingMenu = true
@@ -210,15 +359,65 @@ export default {
       // 播放状态每次执反
       this.setPlaying(!this.playing)
     },
-    showSong() {
+    setTotalTime() {
+      // 获取歌曲总时长，并格式化时间
       const audio = this.$refs.audio
-      console.log(audio.seekable)
+      this.durationTime = audio.duration
+      this.musicTotalTime = this.timeFormat(this.durationTime)
+    },
+    setPlayedTime() {
+      this.getPercent()
+      // 设置已播放时长
+      const audio = this.$refs.audio
+      this.currentTime = audio.currentTime
+      this.musicPlayedTime = this.timeFormat(this.currentTime)
+      // 设置圆形进度条比例
+      this.playedPercent = Math.floor((1 - this.musicPlayedPercent) * 100)
+      // // 设置歌词播放
+      // this.lyricFormat(this.currentTime)
+    },
+    // 计算个位小/大于10的情况
+    sum(time) {
+      time = time < 10 ? '0' + time : time
+      return time
+    },
+    // 根据毫秒数计算分秒
+    // time: 音频已播放时间/总时长
+    timeFormat(time) {
+      // 对 time 进行取整处理
+      time = Math.floor(time)
+      // 对time分情况处理
+      // 1) 小于60秒钟
+      if (time < 60) {
+        time = '00:' + this.sum(time)
+      } else {
+        // 2) 大于60秒
+        // 计算60出现次数
+        let times = Math.floor(time / 60)
+        // 根据60出现次数重新计算 time
+        time = time - times * 60
+        time = this.sum(times) + ':' + this.sum(time)
+      }
+      // 返回数据
+      return time
+    },
+    //设置播放百分比
+    getPercent() {
+      this.musicPlayedPercent = this.currentTime / this.durationTime
+    },
+    getDragPercent(percent) {
+      // 歌曲资源未准备好禁止触发拖拽
+      if (!this.canplayState) return
+      // 根据比例重新计算拖动的进度条位置
+      const audio = this.$refs.audio
+      audio.currentTime = audio.duration * percent / 100
     },
     ...mapMutations({
       setPlaying: 'SET_PLAYING',
       setPlayingSong: 'SET_PLAYINGSONG',
       setPlayingSongIndex: 'SET_PLAYINGSONGINDEX',
-      setPlayingList: 'SET_PLAYINGLIST'
+      setPlayingList: 'SET_PLAYINGLIST',
+      setPlayMode: 'SET_PLAYMODE'
     })
   }
 }
@@ -239,14 +438,15 @@ export default {
   top: 0;
   height: 100vh;
   background-color: #493421;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 1rem;
 }
 
 .top {
   height: 48px;
   width: 100vw;
   box-shadow: 0 1px 2px rgba(0, 0, 0, .5);
-  position: relative;
-  z-index: 102;
 }
 
 .top::after {
@@ -272,9 +472,7 @@ p.ar_name {
 .song_img_area {
   padding-top: 2rem;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  flex: 1;
 }
 
 .song_img {
@@ -283,6 +481,7 @@ p.ar_name {
 }
 
 .song_cover_img {
+  width: 60%;
   position: absolute;
   left: 0;
   bottom: 0;
@@ -295,15 +494,13 @@ p.ar_name {
 }
 
 .song_cover_img img {
-  width: 40%;
+  width: 60%;
   border-radius: 50%;
 }
 
 .play_tool {
   padding: 0 1rem;
   display: flex;
-  position: absolute;
-  bottom: 1.4rem;
   width: 100%;
 }
 
@@ -322,6 +519,18 @@ p.ar_name {
 .play_mode {
   background: url('../../assets/images/order.png') no-repeat center;
   background-size: cover;
+}
+
+.play_loop {
+  background-image: url('../../assets/images/order.png')
+}
+
+.play_random {
+  background-image: url('../../assets/images/aag.png')
+}
+
+.play_singles {
+  background-image: url('../../assets/images/singing.png')
 }
 
 .play_list {
@@ -383,15 +592,17 @@ p.ar_name {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
-.mini_state div:first-child {
+.mini_state_pic div:last-child {
+  position: relative;
   background: url('../../assets/images/m_pause.png') no-repeat center;
   background-size: cover;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(51, 51, 51, .5);
+  border: 2px solid rgba(51, 51, 51, .2);
 }
 
 .mini_state div.mini_play {
@@ -456,7 +667,7 @@ p {
 }
 
 .playing_menu_item {
-  border-bottom: 1px solid rgba(160, 160, 160, .8);
+  border-bottom: 1px solid rgba(160, 160, 160, .3);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -474,7 +685,7 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, .3)
+  border-bottom: 1px solid rgba(160, 160, 160, .3)
 }
 
 .playing_menu_item>div {
@@ -528,19 +739,38 @@ div.cureentSong span {
 }
 
 .playing_menu_ani-enter-active {
-  transition: all .3s linear;
+  transition: all .1s linear;
 }
 
 .playing_menu_ani-leave-active {
-  transition: all .3s linear;
+  transition: all .1s linear;
   transform: translate3d(0, 40%, 0);
   opacity: 0;
 }
 
 // 进度条
-.progress_bar {
-  position: fixed;
-  bottom: 3rem;
-  width: 100vw;
+.progress_bar_wrap {
+  padding: 5px 0;
+}
+
+// 歌词样式
+.lyric_wrap {
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.5;
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.lyric_cont div:first-child {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

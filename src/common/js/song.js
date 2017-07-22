@@ -1,4 +1,3 @@
-import axios from 'axios'
 import ajax from './ajax'
 // 根据歌曲id获取歌曲相关信息
 // 参数: id 为需要请求的歌曲id
@@ -8,7 +7,7 @@ export const getSongInfo = (id, fn) => {
   const songInfo = {}
   // 进行网络请求 
   //获取歌曲基本信息
-  let info = `https://api.imjad.cn/cloudmusic/?type=detail&id=${id}`
+  const info = `https://api.imjad.cn/cloudmusic/?type=detail&id=${id}`
   ajax(info, 'get', (res) => {
     // 获取歌曲信息
     const songs = res.songs[0]
@@ -36,11 +35,35 @@ export const getSongInfo = (id, fn) => {
 
 export const getSongUrl = (id, fn) => {
   // 请求歌曲mp3资源
-  let url = `https://api.imjad.cn/cloudmusic/?type=song&id=${id}`
+  const url = `https://api.imjad.cn/cloudmusic/?type=song&id=${id}`
   ajax(url, 'get', (res) => {
     // 设置播放链接地址
-    let url = res.data[0].url
     // 回调函数
-    fn && fn(url)
+    fn && fn(res.data[0].url)
+  })
+}
+
+export const getSongLyric = (id, fn) => {
+  // 请求歌曲歌词资源
+  const url = `https://api.imjad.cn/cloudmusic/?type=lyric&id=${id}`
+  ajax(url, 'get', (res) => {
+    let result = null
+    // 判断歌曲是否有歌词
+    if (res.lrc) {
+      const currentLrc = res.lrc.lyric
+
+      const lrc = {
+        // 歌词是否支持自动滚动
+        autoScroll: currentLrc.indexOf('0]') > 0 ? true : false,
+        // 歌词
+        lyric: currentLrc
+      }
+      result = lrc
+    } else if (res.nolyric) {
+      result = '纯音乐，无歌词'
+    } else {
+      result = '歌曲无歌词'
+    }
+    fn && fn(result)
   })
 }
