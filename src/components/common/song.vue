@@ -78,7 +78,6 @@ export default {
       this.setOrderPlayList(arr)
       // 设置播放列表
       this.setPlayingList(arr)
-
     },
     ...mapMutations({
       // 设置播放列表
@@ -86,7 +85,6 @@ export default {
       // 设置播放状态
       setPlaying: 'SET_PLAYING',
       // 设置歌曲播放信息
-      setPlayingSong: 'SET_PLAYINGSONG',
       setPlayingSongIndex: 'SET_PLAYINGSONGINDEX',
       setOrderPlayList: 'SET_ORDERPLAYLIST'
     })

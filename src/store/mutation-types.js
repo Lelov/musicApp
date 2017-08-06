@@ -15,3 +15,7 @@ export const SET_PLAYINGSONGINDEX = 'SET_PLAYINGSONGINDEX'
 export const SET_PLAYMODE = 'SET_PLAYMODE'
 //设置顺序播放
 export const SET_ORDERPLAYLIST = 'SET_ORDERPLAYLIST'
+// 添加歌曲
+export const SET_ADDSONG = 'SET_ADDSONG'
+// 删除歌曲
+export const SET_REMOVESONG = 'SET_REMOVESONG'

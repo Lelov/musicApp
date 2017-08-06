@@ -36,7 +36,24 @@ export default {
   data() {
     return {
       // 记录上次播放id
-      lastId: 0
+      lastId: 0,
+      defaultPlayList: {
+        coverImgUrl: require('../../assets/images/lazy.png'),
+        tracks: [
+          {
+            name: '',
+            id: 0,
+            al: {
+              name: ''
+            },
+            ar: [
+              {
+                name: ''
+              }
+            ]
+          }
+        ]
+      }
     }
   },
   computed: {
@@ -46,6 +63,8 @@ export default {
   },
   methods: {
     goDetail() {
+      // 派发事件，详情页开启加载动画
+      this.$on('setLoadingTrue', true)
       // 获取歌单数据
       this.getPlayListDes()
       // 显示歌单详情页
@@ -55,16 +74,18 @@ export default {
       })
     },
     getPlayListDes() {
-      // 请求同一个歌单时不进行网络请求
-      if (this.lastId === this.listId) return
-      this.lastId = this.listId
+      // 设置默认播放列表
+      this.setPlayList(this.defaultPlayList)
       // 根据 id 获取页面数据
       const url = 'https://api.imjad.cn/cloudmusic/?type=playlist&id='
       this.$http.get(url + this.listId).then((res) => {
         if (res.status !== 200) return
         const listData = JSON.parse(res.request.responseText)
+        console.log(listData.playlist)
         //设置歌单列表
         this.setPlayList(listData.playlist)
+        // 派发事件，详情页开启加载动画
+        this.$on('setLoadingFalse', false)
       })
     },
     ...mapMutations({

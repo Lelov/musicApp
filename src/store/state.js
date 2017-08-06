@@ -12,8 +12,9 @@ const state = {
   // 播放模式 playMode: 顺序循环播放：loopPlay-> 0 随机：randomPlay -> 1 单曲循环：singlesPlay -> 2
   playMode: 0,
   // 顺序播放列表
-  orderPlayList: {}
-
+  orderPlayList: {},
+  addSong: '',
+  remvoesong: ''
 }
 
 export default state

@@ -25,7 +25,7 @@ export default {
   components: {
     NavHeader,
     NavTab,
-    Player
+    Player,
   },
   methods: {
     setFontSize() {
@@ -38,7 +38,7 @@ export default {
   },
   mounted() {
     // 默认导航页
-    this.$router.push('/recommend')
+    this.$router.push('/search')
     // app 载入时调整根元素字体
     this.setFontSize()
     // app 宽度发生改变时调整根元素字体

@@ -5,13 +5,13 @@
       {{ playedTime }}
     </div>
     <!-- 中 进度条  -->
-    <div class="progress_bar_cont" ref="progressBar" @click="barTouchPercent">
+    <div class="progress_bar_cont" ref="progressBar" @click.stop="barTouchPercent">
       <!-- 已播放时间的进度条  -->
       <div class="played_progress" :style="{width: barWidth}" ref="playedProgress"></div>
       <!-- 播放圆形按钮  -->
       <div class="progress_btn" ref="progressBtn" @touchstart.prevent="btnTouchStart" @touchmove.prevent="btnTouchMove" @touchend.prevent="btnTouchEnd"></div>
       <!-- 歌曲缓冲百分比
-        <div></div> -->
+                    <div></div> -->
     </div>
     <!-- 右 歌曲总时长  -->
     <div class="total_time">

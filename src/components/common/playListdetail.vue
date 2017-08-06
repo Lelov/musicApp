@@ -1,18 +1,23 @@
 <template>
   <transition name="fade">
     <div class="full_box" ref="detailWrap" @scroll="scroll">
-      <go-back :title="playList.name" :bgColor="'rgba(212, 60, 51, .2)'" ref="goBack"></go-back>
-      <loading v-show=""></loading>
+      <div @click="goBack">
+        <go-back :title="playList.name" :bgColor="'rgba(212, 60, 51, .2)'" ref="goBack"></go-back>
+      </div>
+  
       <div class="play_list_detail">
         <!--头部信息区-->
         <div class="detail_head">
           <!-- 图片区域 -->
           <div class="detail_head_pic">
-            <img :src="playList.coverImgUrl" ref="detailPic">
+            <img v-lazy="playList.coverImgUrl" ref="detailPic">
           </div>
         </div>
+        <div v-show="loadingState">
+          <loading></loading>
+        </div v-show="!loadingState">
         <div ref="listDes" :style="{top: setTop}" class="list_des">
-          <song v-for="(item,index) in playList.tracks" :songName="item.name" :songId="item.id" :alId="item.al.id" :songOrdinal="index+1" :alName="item.al.name" :songSinger="item.ar[0].name" :key="index"></song>
+          <song v-for="(item,index) in playList.tracks" :songName="item.name" :songId="item.id" :songOrdinal="index+1" :alName="item.al.name" :songSinger="item.ar[0].name" :key="index"></song>
         </div>
       </div>
     </div>
@@ -23,7 +28,7 @@
 import GoBack from './goBack'
 import { mapGetters } from 'vuex'
 import Song from './song'
-import Loading from './loading'
+import Loading from './loadingb'
 
 export default {
   components: {
@@ -35,7 +40,8 @@ export default {
     return {
       isLoading: false,
       oldTop: '',
-      goBackH: ''
+      goBackH: '',
+      loadingState: false
     }
   },
   mounted() {
@@ -75,7 +81,13 @@ export default {
       if (picRant > .4) return
       // 根据比率改变图片缩放大小
       this.$refs.detailPic.style.transform = `scale(${picRant + 1})`
+    },
+    goBack() {
+      window.history.back();
     }
+  },
+  created(){
+    this.$emit('setLoadingTrue')
   }
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div class="go_back" :style="{backgroundColor:bgColor,height:h}">
-    <img @click="goBack" src="../../assets/images/back_icon.png" alt="返回" height="28">
+    <img src="../../assets/images/back_icon.png" alt="返回" height="28">
     <div class="msg">
       <p class="title">{{ title }}</p>
       <slot></slot>
@@ -26,11 +26,6 @@ export default {
     h: {
       type: String,
       default: '40px'
-    }
-  },
-  methods: {
-    goBack() {
-      window.history.back();
     }
   }
 }

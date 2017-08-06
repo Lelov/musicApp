@@ -18,7 +18,7 @@ export default {
           path: '/mine'
         },
         {
-          name: '个性推荐',
+          name: '推荐',
           path: '/recommend'
         },
         {
@@ -26,8 +26,8 @@ export default {
           path: '/playlist'
         },
         {
-          name: '排行榜',
-          path: '/ranking'
+          name: '搜索',
+          path: '/search'
         }
       ]
     }

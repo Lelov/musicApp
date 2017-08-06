@@ -10,7 +10,7 @@ Vue.prototype.$http = axios
 Vue.config.productionTip = false
 // 设置默认加载图片
 Vue.use(VueLazyload, {
-  loading: require('./assets/images/loading_big.png'),
+  loading: require('./assets/images/lazy.png'),
   listenEvents: ['scroll']
 })
 

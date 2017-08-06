@@ -28,7 +28,16 @@ const mutations = {
   // 设置顺序
   [types.SET_ORDERPLAYLIST](state, playingList) {
     state.orderPlayList = playingList
+  },
+  // 从播放列表playingList中添加歌曲
+  [types.SET_ADDSONG](state, song) {
+    state.playingList.push(song)
+  },
+  // 从播放列表playingList中删除歌曲
+  [types.SET_REMOVESONG](state, index) {
+    state.playingList.splice(index, 0)
   }
+
 }
 
 export default mutations

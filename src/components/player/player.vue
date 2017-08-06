@@ -1,5 +1,5 @@
 <template lang="html">
-  <div class="player" v-show="playingList.length > 1" @click="showSongLyric">
+  <div class="player" v-show="playingList.length >= 1" @click="showSongLyric">
     <!-- 全屏播放器 -->
     <transition name="fullPlayer">
       <div class="full" v-show="isFull">
@@ -17,22 +17,26 @@
             </div>
           </div>
         </div> 
-        <div class="lyric_wrap" v-show="showLyric">
-          <div class="lyric_cont">
+        <div class="lyric_wrap" v-show="showLyric" ref="lyricWrap">
+          <!-- 切换时加载歌词字样  -->
+          <div class="lyric_default" v-show="!getLyric">
+            歌词加载中...
+          </div>
+          <div class="lyric_cont" v-show="getLyric" ref="lyricCont">
             <div v-show="!songLyric.lrcState">
-              <p>{{songLyric.resources}}</p>
+              <p>{{ songLyric.resources }}</p>
             </div>
-            <div v-show="songLyric.lrcState">
-              <p v-for="(item,index) in songLyric.resources">{{ item }}</p>
+            <div class="lyric" ref="lyric" v-show="songLyric.lrcState">
+              <p v-for="(item,index) in songLyric.resources" :class="{lryAc: resourcesIndex === index}">{{ item }}</p>
             </div>
           </div>
         </div>
-        <!--播放进度条  -->
+        <!-- 播放进度条 -->
         <div class="progress_bar_wrap">
           <progress-bar :playedTime="musicPlayedTime" :totalTime="musicTotalTime" :percent="musicPlayedPercent" @dragPercentChange="getDragPercent"></progress-bar>
         </div>
         <!-- 底部功能按钮 -->
-        <div class="play_tool">
+        <div class="play_tool" @click.stop="">
           <!-- 播放模式 -->
           <div :class="playModeBg" class="play_mode" @click="playModeChange"></div>
           <!--上一曲-->
@@ -60,7 +64,6 @@
           <div class="mini_song_cover_img" v-show="playingSong.picUrl">
             <img :src="playingSong.picUrl" :style="{animationPlayState:playing ? 'running' : 'paused'}" class="ani_cont" width="40" height="40">
           </div>
-
           <div class="song_info">
             <!-- 歌曲名字  -->
             <p>{{ playingSong.songName}}</p>
@@ -80,20 +83,22 @@
       </div>
     </transition>
     <!-- 播放列表 -->
-    <div class="menu_layer" @click="showPlayingMenu=false" v-show="showPlayingMenu"></div>
+    <div class="menu_layer" @click.stop="showPlayingMenu=false" v-show="showPlayingMenu"></div>
     <transition name="playing_menu_ani">
       <div class="playing_menu" v-show="showPlayingMenu" @click.stop="1>2">
         <div class="playing_menu_top">
           <div>切换播放模式</div>
           <div>清空</div>
         </div>
-        <div class="playing_menu_item" @click="play(index)" v-for="(item,index) in orderPlayList">
-          <div :class="{playing_menu_item_info:true,cureentSong:index==playingSongIndex}"><img src="../../assets/images/aap.png" v-show="index==playingSongIndex"></ima>{{ item.songName }}<span> - {{ item.arName }}</span></div>
-          <div class="" @click="delSong(index)"><img src="../../assets/images/x.png" alt=""></div>
+        <div class="playing_menu_item" @click="playWithId(item.songId)" v-for="(item,index) in orderPlayList">
+          <div :class="{playing_menu_item_info:true,cureentSong:item.songId==playingSong.songId}"><img src="../../assets/images/aap.png" v-show="item.songId==playingSong.songId">
+            {{ item.songName }}<span> - {{ item.arName }}</span>
+          </div>
+          <!-- <div class="" @click="delSong(index)"><img src="../../assets/images/x.png" alt=""></div> -->
         </div>
       </div>
     </transition>
-    <!-- 核心 播放器  -->
+    <!-- 核心 播放器 -->
     <div class="playControl">
       <audio ref="audio" :src="setUrl" autoplay="true
       " @ended="musicChange" @canplay="getCanplayState" :loop="playMode === 2" @timeupdate="setPlayedTime" @durationchange="setTotalTime">
@@ -146,7 +151,13 @@ export default {
       changeModeMsg: '',
       songLyric: {},
       // 展示歌词列表
-      showLyric: false
+      showLyric: false,
+      // 获取歌词状态
+      getLyric: false,
+      // 当前播放的歌词索引
+      resourcesIndex: -1,
+      // 初始化歌词界面
+      lyricGuiInitState: false
     }
   },
   computed: {
@@ -158,7 +169,7 @@ export default {
       'playMode',
       'orderPlayList'
     ]),
-    // 播放状态切换时对应图标跟着切换
+    // 播放状态切换 时对应图标跟着切换
     toggleBgImg() {
       return this.playing ? 'mini_pause' : 'mini_play'
     }
@@ -166,6 +177,12 @@ export default {
   watch: {
     // 当歌曲索引发生改变的时候进行播放
     playingSongIndex() {
+      // 请求歌词中
+      this.lyricGuiInitState = this.getLyric = false
+      const lyric = this.$refs.lyric
+      lyric.style.transform = `translate3d(0,0,0)`
+      // 设置播放当前索引歌曲
+      this.setPlayingSong(this.playingSongIndex)
       this.getSongMUrl()
     },
     // 监听播放状态值
@@ -192,9 +209,34 @@ export default {
         // 正顺播放
         this.setPlayingList(this.orderPlayList)
       }
+    },
+    currentTime() {
+      const lyric = this.$refs.lyric
+      // 设置歌词页面自动播放
+      if (this.showLyric && this.songLyric.songLyricTime != null && this.songLyric.autoScroll) {
+        const CURRENT_TIME = Math.floor(this.currentTime)
+        // 根据歌词时间设置高亮歌词
+        this.songLyric.songLyricTime.forEach((item, index) => {
+          if (CURRENT_TIME >= item) {
+            this.resourcesIndex = index
+            lyric.style.transform = `translate3d(0,-${index * 25}px,0)`
+            return
+          }
+        })
+      }
     }
   },
   methods: {
+    // 通过 id 播放歌曲
+    playWithId(id) {
+      this.playingList.forEach((item, index) => {
+        // 获取播放列表歌曲中的id对应的索引值index
+        if (item.songId === id) {
+          this.setPlayingSongIndex(index)
+          return
+        }
+      })
+    },
     // 生成随机播放列表
     getRandomList(arr) {
       // 处理数组地址
@@ -216,11 +258,11 @@ export default {
     },
     // 改变播放模式
     playModeChange() {
-      this.setPlayMode((++this.playMode) % 3)
+      let playModeNum = this.playMode
+      this.setPlayMode((++playModeNum) % 3)
     },
     musicChange() {
-      console.log(this.playMode)
-      // 单曲播放模式时让 音频重复播放
+      // 单曲播放模式 音频重复播放
       if (this.playMode === 2) return
       const audio = this.$refs.audio
       //取消循环播时对loop取反
@@ -231,7 +273,10 @@ export default {
     /*------处理歌词 函数开始-----------*/
     showSongLyric() {
       this.showLyric = !this.showLyric
-      getSongLyric(this.playingSong.songId, (res) => {
+
+      if (this.getLyric) return
+      this.resourcesIndex = -1
+      getSongLyric(this.playingSong.songId).then(res => {
         // 判断是否有歌词，object为有歌词
         this.songLyric = {
           // 设置歌曲是否有歌词
@@ -242,9 +287,18 @@ export default {
           autoScroll: res.autoScroll
         }
         // 歌词进行格式化
-        if (this.songLyric.lrcState) this.lyricFormat()
+        if (this.songLyric.lrcState) {
+          //歌词格式化
+          this.lyricFormat()
+          // 根据状态值决定是否初始化歌词界面
+          if (!this.lyricGuiInitState) {
+            this.lyricGuiInit()
+          }
+        }
+        this.getLyric = true
       })
     },
+    // 对歌词及时间进行格式化
     lyricFormat() {
       const lrc = this.songLyric
       // 每句歌词播放对应的时间戳
@@ -268,6 +322,8 @@ export default {
           // 获取每句歌词
           lrcArr.push(detail[1])
         })
+      } else {
+        lrcArr.unshift("*歌词不支持自动滚动*")
       }
       // 对时间戳数组进行格式化处理
       this.lrcTimeformat(lrcTimeArr)
@@ -278,7 +334,6 @@ export default {
     lrcTimeformat(arr) {
       this.songLyric.songLyricTime = arr.map((item) => {
         item = item.split('[')[1].split('.')[0]
-
         return this.stringToTime(item)
       })
     },
@@ -327,24 +382,29 @@ export default {
     play(index) {
       // 在资源准备未完成不允许操作
       if (!this.canplayState) return
+      console.log(this.playingSong)
       // 设置播状态为true
       this.setPlaying(false)
       // 设置播放歌曲的索引
       this.setPlayingSongIndex(index)
     },
-
+    // 获取歌曲播放链接
     getSongMUrl() {
       // 没有播放歌曲时不继续执行
       if (!this.playingSong) return
-      // 根据索引设置当前播放歌曲
-      this.setPlayingSong(this.playingSongIndex)
-      // 获取歌曲博凡连接地址
-      getSongUrl(this.playingSong.songId, (res) => {
-        // 设置播放歌曲连接地址
-        this.setUrl = res
-        // 设置播状态为true
-        this.setPlaying(true)
-      })
+      // 获取歌曲连接地址
+      getSongUrl(this.playingSong.songId)
+        .then(res => {
+          // 设置播放歌曲连接地址
+          this.setUrl = res
+          // 设置播状态为true
+          this.setPlaying(true)
+          // 在歌词页面切换歌曲
+          if (this.showLyric) {
+            this.showSongLyric()
+            this.showLyric = true
+          }
+        })
     },
     getCanplayState() {
       // 资源请求成功,为可播放状态
@@ -373,8 +433,6 @@ export default {
       this.musicPlayedTime = this.timeFormat(this.currentTime)
       // 设置圆形进度条比例
       this.playedPercent = Math.floor((1 - this.musicPlayedPercent) * 100)
-      // // 设置歌词播放
-      // this.lyricFormat(this.currentTime)
     },
     // 计算个位小/大于10的情况
     sum(time) {
@@ -412,6 +470,18 @@ export default {
       const audio = this.$refs.audio
       audio.currentTime = audio.duration * percent / 100
     },
+    lyricGuiInit() {
+      // 歌词界面初始化操作
+      const lyricWrap = this.$refs.lyricWrap
+      const lyricCont = this.$refs.lyricCont
+      lyricCont.style.top = lyricWrap.offsetHeight / 2 + 'px'
+      this.lyricGuiInitState = true
+    },
+    // 改变歌词界面
+    changeLyricInit() {
+      this.lyricGuiInitState = false
+      this.lyricGuiInit()
+    },
     ...mapMutations({
       setPlaying: 'SET_PLAYING',
       setPlayingSong: 'SET_PLAYINGSONG',
@@ -419,6 +489,10 @@ export default {
       setPlayingList: 'SET_PLAYINGLIST',
       setPlayMode: 'SET_PLAYMODE'
     })
+  },
+  mounted() {
+    // 调整窗口时改变歌词界面
+    window.addEventListener('resize', this.changeLyricInit)
   }
 }
 </script>
@@ -494,7 +568,8 @@ p.ar_name {
 }
 
 .song_cover_img img {
-  width: 60%;
+  width: 70%;
+  height: 70%;
   border-radius: 50%;
 }
 
@@ -664,6 +739,7 @@ p {
   z-index: 888;
   top: 45vh;
   overflow: auto;
+  background-color: #fff;
 }
 
 .playing_menu_item {
@@ -756,11 +832,16 @@ div.cureentSong span {
 // 歌词样式
 .lyric_wrap {
   color: #fff;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.8;
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   position: relative;
+}
+
+.lyric_cont {
+  position: relative;
+  height: 100%;
 }
 
 .lyric_cont div:first-child {
@@ -772,5 +853,24 @@ div.cureentSong span {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.lyric {
+  transition: all .2s ease;
+}
+
+.lyric p {
+  color: #ccc;
+}
+
+.lyric p.lryAc {
+  color: #fff;
+}
+
+.lyric_default {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>

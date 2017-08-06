@@ -1,14 +1,8 @@
 import 'babel-polyfill'
 import Vue from 'vue'
 import Router from 'vue-router'
-import Playlist from 'components/playlist/playlist'
-import Ranking from 'components/ranking/ranking'
-import Recommend from 'components/recommend/recommend'
-import PlayListdetail from 'components/common/playListdetail'
-import Mine from 'components/mine/mine'
 import Swiper from 'vue-awesome-swiper'
-
-
+import Recommend from 'components/recommend/recommend'
 Vue.use(Router)
 Vue.use(Swiper)
 
@@ -17,28 +11,29 @@ export default new Router({
     {
       path: '/playlist',
       name: 'playlist',
-      component: Playlist,
+      component: resolve => require(['components/playlist/playlist.vue'], resolve),
       children: [
         {
           path: ':id',
-          component: PlayListdetail
+          component: resolve => require(['components/common/playListdetail.vue'], resolve),
         }
       ]
     },
     {
-      path: '/ranking',
-      name: 'ranking',
-      component: Ranking
+      path: '/search',
+      name: 'search',
+      component: resolve => require(['components/search/search.vue'], resolve)
     },
     {
       path: '/recommend',
       name: 'recommend',
-      component: Recommend
+      // component: Recommend
+      component: resolve => require(['components/recommend/recommend.vue'], resolve)
     },
     {
       path: '/mine',
       name: 'mine',
-      component: Mine
+      component: resolve => require(['components/mine/mine.vue'], resolve)
     }
   ]
 })
